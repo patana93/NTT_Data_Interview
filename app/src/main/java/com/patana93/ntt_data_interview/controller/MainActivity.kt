@@ -46,18 +46,30 @@ class MainActivity : AppCompatActivity() {
         shadowImageView = findViewById(R.id.shadowImageView)
         loadDataProgressBar = findViewById(R.id.loadDataProgressBar)
 
-        val currentDate = LocalDate.now()
+        fetchTeams()
+
+        var currentDate = LocalDate.now()
         //Date format ex: 2021-12-30
         val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        val currentDateString = currentDate.format(formatter)
+        var currentDateString = currentDate.format(formatter)
         val dayToSubtract = 9
-        val dateTenDayBefore = currentDate.minusDays(dayToSubtract.toLong())
-        val currentDateTenDayBeforeString = dateTenDayBefore.format(formatter)
-
-        titleTextView.text = "Team/s with most wins last ${dayToSubtract+1} days in Serie A\nfrom $currentDate to $currentDateTenDayBeforeString"
-
-        fetchTeams()
+        var dateTenDayBefore = currentDate.minusDays(dayToSubtract.toLong())
+        var currentDateTenDayBeforeString = dateTenDayBefore.format(formatter)
         fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString)
+
+        currentDate = dateTenDayBefore.minusDays(1)
+        currentDateString = currentDate.format(formatter)
+        dateTenDayBefore = currentDate.minusDays(dayToSubtract.toLong())
+        currentDateTenDayBeforeString = dateTenDayBefore.format(formatter)
+        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString)
+
+        currentDate = dateTenDayBefore.minusDays(1)
+        currentDateString = currentDate.format(formatter)
+        dateTenDayBefore = currentDate.minusDays((dayToSubtract + 1).toLong())
+        currentDateTenDayBeforeString = dateTenDayBefore.format(formatter)
+        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString)
+
+        titleTextView.text = "Team/s with most wins last 30 days in Serie A\nfrom $currentDateTenDayBeforeString to ${LocalDate.now()}"
     }
 
     private fun fetchMostWinnerInDataRange(dateFrom: String, dateTo: String){
@@ -90,11 +102,6 @@ class MainActivity : AppCompatActivity() {
                         resultRecycler.layoutManager = GridLayoutManager(this@MainActivity, 1)
                         val resultAdapter = TeamsMostWinAdapter(this@MainActivity, result)
                         resultRecycler.adapter = resultAdapter
-
-                    /*resultRecycler.text = TeamRepo.teamRepo
-                            .filter { it.numbersOfWinInRangeDate == maxWinner }
-                            .joinToString { it.name }
-                         */
                     }
 
                     shadowImageView.visibility = View.GONE
