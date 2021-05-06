@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name = "NTT_Data_Interview"
