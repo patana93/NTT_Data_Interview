@@ -55,24 +55,27 @@ class MainActivity : AppCompatActivity() {
         val dayToSubtract = 9
         var dateTenDayBefore = currentDate.minusDays(dayToSubtract.toLong())
         var currentDateTenDayBeforeString = dateTenDayBefore.format(formatter)
-        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString)
+        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString){}
 
         currentDate = dateTenDayBefore.minusDays(1)
         currentDateString = currentDate.format(formatter)
         dateTenDayBefore = currentDate.minusDays(dayToSubtract.toLong())
         currentDateTenDayBeforeString = dateTenDayBefore.format(formatter)
-        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString)
+        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString){}
 
         currentDate = dateTenDayBefore.minusDays(1)
         currentDateString = currentDate.format(formatter)
         dateTenDayBefore = currentDate.minusDays((dayToSubtract + 1).toLong())
         currentDateTenDayBeforeString = dateTenDayBefore.format(formatter)
-        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString)
+        fetchMostWinnerInDataRange(currentDateTenDayBeforeString, currentDateString) {
+            shadowImageView.visibility = View.GONE
+            loadDataProgressBar.visibility = View.GONE
+        }
 
         titleTextView.text = "Team/s with most wins last 30 days in Serie A\nfrom $currentDateTenDayBeforeString to ${LocalDate.now()}"
     }
 
-    private fun fetchMostWinnerInDataRange(dateFrom: String, dateTo: String){
+    private fun fetchMostWinnerInDataRange(dateFrom: String, dateTo: String, callback: () -> Unit){
         call = request.getMatches(
             getString(R.string.api_key),
             "SA",
@@ -102,10 +105,9 @@ class MainActivity : AppCompatActivity() {
                         resultRecycler.layoutManager = GridLayoutManager(this@MainActivity, 1)
                         val resultAdapter = TeamsMostWinAdapter(this@MainActivity, result)
                         resultRecycler.adapter = resultAdapter
-                    }
 
-                    shadowImageView.visibility = View.GONE
-                    loadDataProgressBar.visibility = View.GONE
+                        callback()
+                    }
                 } else {
                     println("ERROR: ${response.errorBody()}")
                 }
