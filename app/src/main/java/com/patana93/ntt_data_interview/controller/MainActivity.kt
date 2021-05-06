@@ -1,4 +1,4 @@
-package com.patana93.ntt_data_interview
+package com.patana93.ntt_data_interview.controller
 
 import android.os.Bundle
 import android.view.View
@@ -7,7 +7,11 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.internal.LinkedTreeMap
+import com.patana93.ntt_data_interview.R
+import com.patana93.ntt_data_interview.controller.adapter.TeamsMostWinAdapter
 import com.patana93.ntt_data_interview.data.api.FootballDataEndpoints
 import com.patana93.ntt_data_interview.data.api.ServiceBuilder
 import com.patana93.ntt_data_interview.data.model.MatchApi
@@ -26,7 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var call: Call<MatchApi>
     private lateinit var call2: Call<TeamApi>
     private lateinit var request: FootballDataEndpoints
-    private lateinit var resultTextView: TextView
+    private lateinit var resultRecycler: RecyclerView
     private lateinit var titleTextView: TextView
     private lateinit var shadowImageView: ImageView
     private lateinit var loadDataProgressBar: ProgressBar
@@ -37,11 +41,10 @@ class MainActivity : AppCompatActivity() {
 
         request = ServiceBuilder.buildService(FootballDataEndpoints::class.java)
 
-        resultTextView = findViewById(R.id.resultTextView)
+        resultRecycler = findViewById(R.id.teamsRecyclerView)
         titleTextView = findViewById(R.id.titleTextView)
         shadowImageView = findViewById(R.id.shadowImageView)
         loadDataProgressBar = findViewById(R.id.loadDataProgressBar)
-
 
         val currentDate = LocalDate.now()
         //Date format ex: 2021-12-30
@@ -83,9 +86,15 @@ class MainActivity : AppCompatActivity() {
                     val maxWinner =
                         TeamRepo.teamRepo.maxByOrNull { it.numbersOfWinInRangeDate }?.numbersOfWinInRangeDate
                     maxWinner?.let {
-                        resultTextView.text = TeamRepo.teamRepo
+                        val result = TeamRepo.teamRepo.filter { it.numbersOfWinInRangeDate == maxWinner}
+                        resultRecycler.layoutManager = GridLayoutManager(this@MainActivity, 1)
+                        val resultAdapter = TeamsMostWinAdapter(this@MainActivity, result)
+                        resultRecycler.adapter = resultAdapter
+
+                    /*resultRecycler.text = TeamRepo.teamRepo
                             .filter { it.numbersOfWinInRangeDate == maxWinner }
                             .joinToString { it.name }
+                         */
                     }
 
                     shadowImageView.visibility = View.GONE
@@ -108,11 +117,12 @@ class MainActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val teamsList = response.body()!!.teams
                     for (team in teamsList) {
-                        TeamRepo.teamRepo.add(Team(team["name"] as String))
+                        TeamRepo.teamRepo.add(Team(team["name"] as String, team["crestUrl"] as String))
                     }
                 } else {
                     println("ERROR: ${response.errorBody()}")
                 }
+                println(TeamRepo.teamRepo.joinToString())
             }
             override fun onFailure(call: Call<TeamApi>, t: Throwable) {
                 Toast.makeText(this@MainActivity, "${t.message}", Toast.LENGTH_SHORT).show()
