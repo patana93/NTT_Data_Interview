@@ -15,7 +15,7 @@
         android:layout_marginEnd="24dp"
         android:fontFamily="sans-serif-medium"
         android:gravity="center"
-        android:text="TextView"
+        android:text="@string/loading"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

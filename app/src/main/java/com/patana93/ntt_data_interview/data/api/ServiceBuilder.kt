@@ -10,7 +10,7 @@ object ServiceBuilder {
     private val client = OkHttpClient.Builder().build()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("http://api.football-data.org/v2/")
+        .baseUrl("https://api.football-data.org/v2/")
         .addConverterFactory(GsonConverterFactory.create())
         .client(client)
         .build()

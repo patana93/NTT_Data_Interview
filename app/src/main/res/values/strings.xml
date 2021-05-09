@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">NTT_Data_Interview</string>
     <string name="api_key">3db955acc6fb4ee2b864fa6b4d8a58c2</string>
+
+    <!-- Main Activity -->
+    <string name="loading">Loading…</string>
+    <string name="conn_error_check_conn">Check your internet connection</string>
 </resources>
