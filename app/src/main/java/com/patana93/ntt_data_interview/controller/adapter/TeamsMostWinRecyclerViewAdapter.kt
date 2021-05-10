@@ -10,16 +10,15 @@ import android.widget.TextView
 import androidx.core.net.toUri
 import androidx.recyclerview.widget.RecyclerView
 import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou
-import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYouListener
 import com.patana93.ntt_data_interview.R
 import com.patana93.ntt_data_interview.data.model.Team
 
-class TeamsMostWinAdapter(private val context: Context, private val dataSet: List<Team>): RecyclerView.Adapter<TeamsMostWinAdapter.ViewHolder>() {
+class TeamsMostWinRecyclerViewAdapter(private val context: Context, private val dataSet: List<Team>): RecyclerView.Adapter<TeamsMostWinRecyclerViewAdapter.ViewHolder>() {
 
     // Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
         // Create a new view, which defines the UI of the list item
-        val view = LayoutInflater.from(context).inflate(R.layout.team_item, viewGroup, false)
+        val view = LayoutInflater.from(context).inflate(R.layout.fragment_teams_most_win_item, viewGroup, false)
         return ViewHolder(view)
     }
 

@@ -2,53 +2,30 @@ package com.patana93.ntt_data_interview.controller
 
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.View
-import android.widget.*
-import androidx.annotation.RequiresApi
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.internal.LinkedTreeMap
+import androidx.navigation.findNavController
+import androidx.navigation.ui.setupActionBarWithNavController
+
 import com.patana93.ntt_data_interview.R
-import com.patana93.ntt_data_interview.controller.adapter.TeamsMostWinAdapter
-import com.patana93.ntt_data_interview.data.api.FootballDataEndpoints
-import com.patana93.ntt_data_interview.data.api.ServiceBuilder
-import com.patana93.ntt_data_interview.data.model.MatchApi
-import com.patana93.ntt_data_interview.data.model.Team
-import com.patana93.ntt_data_interview.data.model.TeamApi
-import com.patana93.ntt_data_interview.data.model.TeamRepo
-import com.patana93.ntt_data_interview.getDateFormatted
-import kotlinx.coroutines.*
-import retrofit2.Call
-import retrofit2.Response
-import java.lang.Error
-import java.net.UnknownHostException
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.*
+
 
 const val CONN_ERR = "CONN_ERR"
 const val CONN_INFO = "CONN_INFO"
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var request: FootballDataEndpoints
-    private lateinit var resultRecycler: RecyclerView
-    private lateinit var titleTextView: TextView
-    private lateinit var shadowImageView: ImageView
-    private lateinit var loadDataProgressBar: ProgressBar
-    private var result = arrayListOf<Team>()
-    private lateinit var resultAdapter: TeamsMostWinAdapter
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        request = ServiceBuilder.buildService(FootballDataEndpoints::class.java)
+        val navController = findNavController(R.id.nav_host_fragment)
+        setupActionBarWithNavController(navController)
+
+
+        /*request = ServiceBuilder.buildService(FootballDataEndpoints::class.java)
 
         resultRecycler = findViewById(R.id.teamsRecyclerView)
         titleTextView = findViewById(R.id.titleTextView)
@@ -88,9 +65,9 @@ class MainActivity : AppCompatActivity() {
                     updateUI(-1)
                 }
             }
-        }
+        }*/
     }
-
+/*
     private fun updateUI(maxWinner: Int?) {
         result.clear()
         result.addAll(TeamRepo.teamRepo.filter { it.numbersOfWinInRangeDate == maxWinner })
@@ -108,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             dateFrom = dateFrom,
             dateTo = dateTo
         )
-        if (response.isSuccessful) {
+        if (response?.isSuccessful == true) {
             val matchList = response.body()!!.matchList
             for (match in matchList) {
                 val score = match["score"] as LinkedTreeMap<String, Any>
@@ -122,7 +99,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             Toast.makeText(this@MainActivity, getString(R.string.conn_error_check_conn), Toast.LENGTH_LONG).show()
-            Log.e(CONN_ERR, "${response.errorBody()}")
+            Log.e(CONN_ERR, "${response?.errorBody()}")
         }
     }
 
@@ -141,7 +118,7 @@ class MainActivity : AppCompatActivity() {
         Log.i(CONN_INFO, TeamRepo.teamRepo.joinToString())
     }
 
-
+*/
     private fun isNetworkConnected(): Boolean {
         //TODO Check https://www.raywenderlich.com/6994782-android-networking-with-kotlin-tutorial-getting-started
         //1
@@ -159,5 +136,14 @@ class MainActivity : AppCompatActivity() {
                     networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         }
 
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            android.R.id.home -> {
+                onBackPressed()
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 }

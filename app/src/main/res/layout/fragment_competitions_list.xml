@@ -3,18 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".controller.MainActivity">
+    android:layout_height="match_parent">
 
-    <fragment
-        android:id="@+id/nav_host_fragment"
-        android:name="androidx.navigation.fragment.NavHostFragment"
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/competitionsRecyclerView"
+        android:name="com.patana93.ntt_data_interview.controller.fragment.CompetitionsFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:defaultNavHost="true"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        app:layoutManager="LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/main_navigation" />
+        tools:context=".controller.fragment.CompetitionsFragment"
+        tools:listitem="@layout/fragment_competitions_item" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
