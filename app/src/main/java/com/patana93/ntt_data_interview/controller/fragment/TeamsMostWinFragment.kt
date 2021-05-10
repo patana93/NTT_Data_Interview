@@ -14,10 +14,13 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.patana93.ntt_data_interview.HasLoading
 import com.patana93.ntt_data_interview.R
+import com.patana93.ntt_data_interview.Utils
 import com.patana93.ntt_data_interview.controller.CONN_ERR
 import com.patana93.ntt_data_interview.controller.CONN_INFO
 import com.patana93.ntt_data_interview.controller.adapter.TeamsMostWinRecyclerViewAdapter
@@ -25,8 +28,8 @@ import com.patana93.ntt_data_interview.data.api.FootballDataEndpoints
 import com.patana93.ntt_data_interview.data.api.ServiceBuilder
 import com.patana93.ntt_data_interview.data.model.Matches
 import com.patana93.ntt_data_interview.data.model.Team
-import com.patana93.ntt_data_interview.data.model.TeamApi
-import com.patana93.ntt_data_interview.data.model.TeamRepo
+import com.patana93.ntt_data_interview.data.model.Teams
+import com.patana93.ntt_data_interview.data.model.repo.TeamRepo
 import com.patana93.ntt_data_interview.getDateFormatted
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -38,7 +41,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 
-class TeamsMostWinFragment : Fragment() {
+class TeamsMostWinFragment : Fragment(), HasLoading {
     private lateinit var request: FootballDataEndpoints
     private lateinit var resultRecycler: RecyclerView
     private lateinit var titleTextView: TextView
@@ -52,10 +55,13 @@ class TeamsMostWinFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_teams_most_win_list, container, false)
+
+        addLoadingUI()
+
         request = ServiceBuilder.buildService(FootballDataEndpoints::class.java)
 
         resultRecycler = view.findViewById(R.id.teamsRecyclerView)
-        titleTextView = view.findViewById(R.id.titleTextView)
+        titleTextView = view.findViewById(R.id.titleMostWinFragTextView)
         shadowImageView = view.findViewById(R.id.shadowImageView)
         loadDataProgressBar = view.findViewById(R.id.loadDataProgressBar)
 
@@ -64,20 +70,9 @@ class TeamsMostWinFragment : Fragment() {
         resultRecycler.adapter = resultAdapter
 
         GlobalScope.launch(Dispatchers.IO) {
-            if(isNetworkConnected()){
+            if(Utils.isNetworkConnected(requireContext())){
                 fetchTeams()
-                val currentDate = LocalDate.now()
-
-                var (startDate, endDate) = Pair(currentDate.minusDays(9), currentDate)
-                fetchMostWinnerInDataRange(startDate.getDateFormatted(), endDate.getDateFormatted())
-
-                withContext(Dispatchers.Main){
-                    val maxWinner =
-                        TeamRepo.teamRepo.maxByOrNull { it.numbersOfWinInRangeDate }?.numbersOfWinInRangeDate
-                    maxWinner?.let {
-                        updateUI(maxWinner)
-                    }
-                }
+                fetchMostWinnerInDataRange()
             } else {
                 withContext(Dispatchers.Main){
                     Toast.makeText(
@@ -85,42 +80,44 @@ class TeamsMostWinFragment : Fragment() {
                         getString(R.string.conn_error_check_conn),
                         Toast.LENGTH_LONG
                     ).show()
-                    updateUI(-1)
+                    updateUI(-1, "", "")
                 }
             }
         }
         return view
     }
 
-    private fun updateUI(maxWinner: Int?) {
+    private fun getMaxNumberOfWin(): Int? {
+        return TeamRepo.teamRepo.maxByOrNull { it.numbersOfWinInRangeDate }?.numbersOfWinInRangeDate
+    }
+
+    private fun updateUI(maxWinner: Int?, startDate: String, endDate: String) {
         result.clear()
         result.addAll(TeamRepo.teamRepo.filter { it.numbersOfWinInRangeDate == maxWinner })
         resultAdapter.notifyDataSetChanged()
-        shadowImageView.visibility = View.GONE
-        loadDataProgressBar.visibility = View.GONE
-        titleTextView.text = "Team/s with most wins last 30 days in Serie A\nfrom ${LocalDate.now().minusDays(
-            29
-        )} to ${LocalDate.now()}"
+        removeLoadingUI()
+        titleTextView.text = "Team/s with most wins last 30 days in Serie A\nfrom $startDate to $endDate"
     }
 
-    private suspend fun fetchMostWinnerInDataRange(dateFrom: String, dateTo: String){
+    private suspend fun fetchMostWinnerInDataRange(){
         val response: Response<Matches>? = request.getMatches(getString(R.string.api_key))
         if (response?.isSuccessful == true) {
+            //GET All match FINISHED in the competition
             val matchList = response.body()!!.matches
 
-            var formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssz")
-            formatter = formatter.withLocale(Locale.getDefault())
+            //Check if from the last match in the competition have passed more than 30 days
+            val formatter: DateTimeFormatter = DateTimeFormatter
+                .ofPattern("yyyy-MM-dd'T'HH:mm:ssz")
+                .withLocale(Locale.getDefault())
             val lastDateMatch = LocalDate.parse(matchList.last().utcDate, formatter)
-
-            //TODO ADD TEST HERE. TRANSFORM THIS CHECK IN A FUNCTION
-            val today = LocalDate.now()
-            val endDate = if(today.minusDays(29).isBefore(lastDateMatch)){
+            val endDate = if(Utils.checkMatchExistLast30Days(lastDateMatch)){
                 LocalDate.now()
             } else {
                 lastDateMatch
             }
             val startDate = endDate.minusDays(29)
 
+            //Filter matches
             val filteredMatches = arrayListOf<Match>()
             for(match in matchList){
                 val curr = LocalDate.parse(match.utcDate, formatter)
@@ -129,6 +126,7 @@ class TeamsMostWinFragment : Fragment() {
                 }
             }
 
+            //Set win counter for teams
             for (match in filteredMatches) {
                 val score = match.score
                 val home = match.homeTeam
@@ -138,8 +136,17 @@ class TeamsMostWinFragment : Fragment() {
                     "HOME_TEAM" -> TeamRepo.teamRepo.find { it.name == home.name }?.addWin()
                     "AWAY_TEAM" -> TeamRepo.teamRepo.find { it.name == away.name }?.addWin()
                 }
+
+                //Update UI
+                withContext(Dispatchers.Main){
+                    val maxWinner = getMaxNumberOfWin()
+                    maxWinner?.let {
+                        updateUI(maxWinner, startDate.getDateFormatted(), endDate.getDateFormatted())
+                    }
+                }
             }
         } else {
+            //No Connection
             withContext(Dispatchers.Main){
                 Toast.makeText(
                     context,
@@ -151,14 +158,14 @@ class TeamsMostWinFragment : Fragment() {
         }
     }
 
+    /**
+     * Get Teams in a competition
+     */
     private suspend fun fetchTeams() {
-        var responseTeam: Response<TeamApi>? = null
-        responseTeam = request.getTeams(getString(R.string.api_key))
+        val responseTeam: Response<Teams>? = request.getTeams(getString(R.string.api_key))
         if (responseTeam?.isSuccessful == true) {
-            val teamsList = responseTeam.body()!!.teams
-            for (team in teamsList) {
-                TeamRepo.teamRepo.add(Team(team["name"] as String, team["crestUrl"] as String))
-            }
+            TeamRepo.teamRepo.clear()
+            TeamRepo.teamRepo = responseTeam.body()!!.teams
         } else {
             withContext(Dispatchers.Main){
                 Toast.makeText(
@@ -172,23 +179,13 @@ class TeamsMostWinFragment : Fragment() {
         Log.i(CONN_INFO, TeamRepo.teamRepo.joinToString())
     }
 
+    override fun addLoadingUI() {
+        view?.findViewById<ImageView>(R.id.shadowImageView)?.visibility = View.VISIBLE
+        view?.findViewById<ProgressBar>(R.id.loadDataProgressBar)?.visibility = View.VISIBLE
+    }
 
-    private fun isNetworkConnected(): Boolean {
-        //TODO Check https://www.raywenderlich.com/6994782-android-networking-with-kotlin-tutorial-getting-started
-        //1
-        val connectivityManager = requireActivity().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        //2
-        return if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.M){
-            val activeNetwork = connectivityManager.activeNetworkInfo?.isConnected
-            activeNetwork != null && activeNetwork
-        } else {
-            val activeNetwork = connectivityManager.activeNetwork
-            //3
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-            //4
-            networkCapabilities != null &&
-                    networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        }
-
+    override fun removeLoadingUI() {
+        view?.findViewById<ImageView>(R.id.shadowImageView)?.visibility = View.GONE
+        view?.findViewById<ProgressBar>(R.id.loadDataProgressBar)?.visibility = View.GONE
     }
 }

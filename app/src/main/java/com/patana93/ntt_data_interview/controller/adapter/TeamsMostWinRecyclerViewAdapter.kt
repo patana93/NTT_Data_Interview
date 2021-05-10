@@ -13,7 +13,7 @@ import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou
 import com.patana93.ntt_data_interview.R
 import com.patana93.ntt_data_interview.data.model.Team
 
-class TeamsMostWinRecyclerViewAdapter(private val context: Context, private val dataSet: List<Team>): RecyclerView.Adapter<TeamsMostWinRecyclerViewAdapter.ViewHolder>() {
+class TeamsMostWinRecyclerViewAdapter(private val context: Context, private val teamsList: List<Team>): RecyclerView.Adapter<TeamsMostWinRecyclerViewAdapter.ViewHolder>() {
 
     // Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
@@ -26,14 +26,13 @@ class TeamsMostWinRecyclerViewAdapter(private val context: Context, private val 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         // Get element from dataset at this position and replace the
         // contents of the view with that element
-        viewHolder.name.text = dataSet[position].name
-        viewHolder.nWin.text = dataSet[position].numbersOfWinInRangeDate.toString()
-        //TODO add placeholder retriving data with normal way: https://github.com/corouteam/GlideToVectorYou
-        GlideToVectorYou.justLoadImage(context as Activity, dataSet[position].crestURL.toUri(), viewHolder.image)
+        viewHolder.name.text = teamsList[position].name
+        viewHolder.nWin.text = teamsList[position].numbersOfWinInRangeDate.toString()
+        GlideToVectorYou.justLoadImage(context as Activity, teamsList[position].crestURL.toUri(), viewHolder.image)
     }
 
-    // Return the size of your dataset (invoked by the layout manager)
-    override fun getItemCount() = dataSet.size
+    // Return the size of your teamList (invoked by the layout manager)
+    override fun getItemCount() = teamsList.size
 
     /**
      * Provide a reference to the type of views that you are using
